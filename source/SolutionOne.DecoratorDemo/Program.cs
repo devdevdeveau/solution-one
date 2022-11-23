@@ -1,87 +1,172 @@
-﻿Brew brew = new(Coffee.LargeCoffee, Temperature.Hot, AddOn.Cream, AddOn.Cream, AddOn.Hazelnut, AddOn.Hazelnut,
-    AddOn.Hazelnut, AddOn.Sugar);
+﻿CoffeeDecorator coffee = new Coffee();
+coffee = new Cream(coffee);
+coffee = new Cream(coffee);
+coffee = new Cream(coffee);
+coffee = new Sugar(coffee);
+coffee = new Sugar(coffee);
+coffee = new Sugar(coffee);
+coffee = new Hazelnut(coffee);
+coffee = new ManagerDiscount(coffee);
 
-Console.WriteLine(brew);
+Console.WriteLine(coffee.Name);
+Console.WriteLine($"{coffee.CalculateCalories()} Calories");
+Console.WriteLine($"{coffee.CalculateCost():C}");
 
 
-internal class Coffee
+internal abstract class CoffeeDecorator
 {
-    private Coffee()
-    {
-        // locking construction to static initializer
-    }
-
-    public required string Name { get; init; }
-
-    public required double Calories { get; init; }
-    
-    public required decimal Cost { get; init; }
-
-    public static Coffee SmallCoffee = new()
-        { Name = "Small Black Coffee", Calories = 5, Cost = 1.00m };
-
-    public static Coffee RegularCoffee = new()
-        { Name = "Black Regular Coffee", Calories = 10, Cost = 2.00m };
-
-    public static Coffee LargeCoffee = new()
-        { Name = "Large Black Coffee", Calories = 20, Cost = 3.00m };
+    public abstract string Name { get; }
+    public abstract decimal CalculateCost();
+    public abstract decimal CalculateCalories();
 }
 
-internal enum Temperature
+internal class Coffee : CoffeeDecorator
 {
-    Hot,
-    Warm,
-    Cold,
-    Iced
-}
+    public override string Name => "Black Coffee";
 
-internal class AddOn
-{
-    private AddOn()
+    public override decimal CalculateCost()
     {
-        // Locking construction to static initializer
+        return 1.00m;
     }
 
-    public required string Name { get; init; }
-    public required double Calories { get; init; }
-    public required decimal Cost { get; init; }
-
-    public static AddOn Sugar = new() { Calories = 20, Cost = 0m, Name = nameof(Sugar) };
-    public static AddOn Cream = new() { Calories = 30, Cost = 0m, Name = nameof(Cream) };
-    public static AddOn Hazelnut = new() { Calories = 20, Cost = 0.50m, Name = nameof(Hazelnut) };
-}
-
-internal class Brew
-{
-    private readonly Coffee _coffee;
-    private readonly Temperature _temperature;
-    private readonly AddOn[] _addOns;
-
-    public Brew(Coffee coffee, Temperature temperature, params AddOn[] addOns)
+    public override decimal CalculateCalories()
     {
-        _coffee = coffee;
-        _temperature = temperature;
-        _addOns = addOns;
-    }
-
-    public string Name => $"{_temperature} {_coffee.Name} {_addOns.Aggregate("with ", AddOnAggregator)}";
-    public decimal Cost => _coffee.Cost + _addOns.Sum(addOn => addOn.Cost);
-    public double Calories => _coffee.Calories + _addOns.Sum(addOn => addOn.Calories);
-
-    private string AddOnAggregator(string current, AddOn addOn)
-    {
-        return $"{current}{addOn.Name} ";
-    }
-
-    public override string ToString()
-    {
-         return $"""
-                Name: {Name}
-                Calories: {Calories}
-                Cost: {Cost:C}
-                """;
+        return 5m;
     }
 }
 
-// Adding raspberry is easy now
-// It's a bit ... wordy though
+internal class LargeCoffee : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _decorator;
+
+    public LargeCoffee(CoffeeDecorator decorator)
+    {
+        _decorator = decorator;
+    }
+
+    public override string Name => $"Large {_decorator.Name}";
+
+    public override decimal CalculateCost()
+    {
+        return _decorator.CalculateCost() * 1.25m;
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _decorator.CalculateCalories() * 1.15m;
+    }
+}
+
+internal class SmallCoffee : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _decorator;
+
+    public SmallCoffee(CoffeeDecorator decorator)
+    {
+        _decorator = decorator;
+    }
+
+    public override string Name => $"Small {_decorator.Name}";
+
+    public override decimal CalculateCost()
+    {
+        return _decorator.CalculateCost() * 0.75m;
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _decorator.CalculateCalories() * 0.85m;
+    }
+}
+
+internal class Cream : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _decorator;
+
+    public Cream(CoffeeDecorator decorator)
+    {
+        _decorator = decorator;
+    }
+
+    public override string Name => $"{_decorator.Name} Cream";
+
+    public override decimal CalculateCost()
+    {
+        return _decorator.CalculateCost() + 0.10m;
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _decorator.CalculateCalories() + 20m;
+    }
+}
+
+internal class Sugar : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _coffeeDecorator;
+
+    public Sugar(CoffeeDecorator coffeeDecorator)
+    {
+        _coffeeDecorator = coffeeDecorator;
+    }
+
+    public override string Name => $"{_coffeeDecorator.Name} Sugar";
+
+    public override decimal CalculateCost()
+    {
+        return _coffeeDecorator.CalculateCost() + 0m;
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _coffeeDecorator.CalculateCalories() + 50m;
+    }
+}
+
+internal class Hazelnut : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _coffeeDecorator;
+
+    public Hazelnut(CoffeeDecorator coffeeDecorator)
+    {
+        _coffeeDecorator = coffeeDecorator;
+    }
+
+    public override string Name => $"{_coffeeDecorator.Name} Hazel Nut";
+
+    public override decimal CalculateCost()
+    {
+        return _coffeeDecorator.CalculateCost() + 0.50m;
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _coffeeDecorator.CalculateCalories() + 10m;
+    }
+}
+
+internal class ManagerDiscount : CoffeeDecorator
+{
+    private readonly CoffeeDecorator _coffeeDecorator;
+    private readonly decimal _percentDiscount;
+
+    public ManagerDiscount(CoffeeDecorator coffeeDecorator, decimal percentDiscount = 0.25m)
+    {
+        _coffeeDecorator = coffeeDecorator;
+        _percentDiscount = percentDiscount;
+    }
+
+    public override string Name => $"Discounted {_coffeeDecorator.Name}";
+
+    public override decimal CalculateCost()
+    {
+        return _coffeeDecorator.CalculateCost() * (100m - _percentDiscount);
+    }
+
+    public override decimal CalculateCalories()
+    {
+        return _coffeeDecorator.CalculateCalories();
+    }
+}
+
+// Adding raspberry is really easy now
