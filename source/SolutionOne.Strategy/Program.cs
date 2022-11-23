@@ -1,27 +1,94 @@
 ﻿const double distance = 15d;
-const double walkMph = 3.5d;
-const double bikeMph = 15d;
-const double carMph = 60d;
-
-double CalculateTravelTime(double travelDistance, double travelSpeed) => travelDistance / travelSpeed;
 
 Console.WriteLine("The travelDistance to work is 15 miles, you can (W)alk, (B)ike, or Drive a (C)ar");
 Console.WriteLine("How do you want to go to work today?");
-var key = Console.ReadKey().KeyChar;
+var key = Console.ReadKey(true).KeyChar;
 
-switch (char.ToUpperInvariant(key))
+Context context = new(new WalkingStrategy(), new BikingStrategy(), new DrivingStrategy());
+context.SelectStrategy(key);
+Console.WriteLine($"{context.Name} will take {context.CalculateTravelTime(distance).TotalMinutes:F2} minutes.");
+
+internal interface ITravelStrategy
 {
-    case 'W':
-        Console.WriteLine($"Walking will take {TimeSpan.FromHours(CalculateTravelTime(distance, walkMph)).TotalMinutes:F2} minutes.");
-        break;
-    case 'B':
-        Console.WriteLine($"Biking will take {TimeSpan.FromHours(CalculateTravelTime(distance, bikeMph)).TotalMinutes:F2} minutes.");
-        break;
-    case 'C':
-        Console.WriteLine($"Driving will take {TimeSpan.FromHours(CalculateTravelTime(distance, carMph)).TotalMinutes:F2} minutes.");
-        break;
+    string Name { get; }
+    char Selector { get; }
+    TimeSpan CalculateTravelTime(double travelDistance);
+}
 
-    default:
-        Console.WriteLine($"Unsupported Selection {key}");
-        return;
+internal class Context : ITravelStrategy
+{
+    private readonly ITravelStrategy[] _strategies;
+    private ITravelStrategy _selectedTravelStrategy = FailOverStrategy.Instance;
+
+    public Context(params ITravelStrategy[] strategies)
+    {
+        _strategies = strategies;
+    }
+
+    public void SelectStrategy(char selector)
+    {
+        foreach (var strategy in _strategies)
+        {
+            if (!strategy.Selector.Equals(selector)) continue;
+            _selectedTravelStrategy = strategy;
+            break;
+        }
+    }
+
+    public string Name => _selectedTravelStrategy.Name;
+    public char Selector => '\0';
+    public TimeSpan CalculateTravelTime(double travelDistance)
+    {
+        return _selectedTravelStrategy.CalculateTravelTime(travelDistance);
+    }
+}
+
+internal class FailOverStrategy : ITravelStrategy
+{
+    public static ITravelStrategy Instance = new FailOverStrategy();
+
+    private FailOverStrategy()
+    {
+
+    }
+
+    public string Name => "Invalid Selection";
+    public char Selector => '\0';
+    public TimeSpan CalculateTravelTime(double travelDistance)
+    {
+        return TimeSpan.Zero;
+    }
+}
+
+internal class WalkingStrategy : ITravelStrategy
+{
+    private const double Speed = 3.5d;
+    public string Name => "Walking";
+    public char Selector => 'W';
+    public TimeSpan CalculateTravelTime(double travelDistance)
+    {
+        return TimeSpan.FromHours(travelDistance / Speed);
+    }
+}
+
+internal class BikingStrategy : ITravelStrategy
+{
+    private const double Speed = 15d;
+    public string Name => "Biking";
+    public char Selector => 'B';
+    public TimeSpan CalculateTravelTime(double travelDistance)
+    {
+        return TimeSpan.FromHours(travelDistance / Speed);
+    }
+}
+
+internal class DrivingStrategy : ITravelStrategy
+{
+    private const double Speed = 60d;
+    public string Name => "Driving";
+    public char Selector => 'C';
+    public TimeSpan CalculateTravelTime(double travelDistance)
+    {
+        return TimeSpan.FromHours(travelDistance / Speed);
+    }
 }
