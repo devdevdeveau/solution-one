@@ -2,7 +2,8 @@
 
 Phil DeVeau     
 phil@devdevdeveau.net   
-https://github.com/devdevdeveau/solution-one
+https://github.com/devdevdeveau/solution-one    
+[Live Stream](https://www.youtube.com/watch?v=ntL1-pFmmgM) (https://www.youtube.com/watch?v=ntL1-pFmmgM)
 
 ## Why are we talking about this?
 
